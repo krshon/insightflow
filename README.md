@@ -1,5 +1,6 @@
-# CricInsight
+# Insight Flow
 
-CricInsight is a cricket analytics project that aims to analyze IPL 2025 data using Python and natural language queries.
+Insight Flow is an LLM-powered business analytics platform that transforms natural language questions into actionable data insights and visualizations.
 
-This project focuses on match-level and player-level performance insights.
+The project focuses on analyzing transactional business data to uncover revenue trends, customer behavior, and product performance using Python, data analysis, and AI-driven insight generation.
+s
