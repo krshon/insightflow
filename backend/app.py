@@ -80,19 +80,11 @@ def query_insights(req: QueryRequest):
         intent = "revenue_by_category"
         df = data["revenue_by_category"]
 
-        top = df.sort_values("Total Amount", ascending=False).iloc[0]
-
-        context = f"""
-Product Category: {top['Product Category']}
-Revenue: {top['Total Amount']}
-"""
-
-        fallback_insight = (
-            f"{top['Product Category']} is the highest revenue-generating category, "
-            f"indicating strong product-market demand."
-        )
-
-        visualization = "bar_chart"
+        from insight_engine import analyze_revenue_by_category
+        result = analyze_revenue_by_category(df)
+        context = result["context"]
+        fallback_insight = result["fallback"]
+        visualization = result["visualization"]
 
     elif "month" in question or "trend" in question:
         intent = "monthly_revenue"
