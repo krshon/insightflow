@@ -59,6 +59,36 @@ def get_monthly_revenue():
 def get_customer_segments():
     data = load_data()["customer_segments"]
     return data.to_dict(orient="records")
+# -----------------------------
+# Structured Insights Endpoint (for Power BI)
+# -----------------------------
+@app.get("/insights")
+def get_insights():
+    data = load_data()
+
+    revenue_df = data["monthly_revenue"]
+    category_df = data["revenue_by_category"]
+
+    first = revenue_df.iloc[0]["Total Amount"]
+    last = revenue_df.iloc[-1]["Total Amount"]
+
+    change_pct = round(((last - first) / first) * 100, 2)
+
+    trend = "stable"
+    if change_pct > 5:
+        trend = "growing"
+    elif change_pct < -5:
+        trend = "declining"
+
+    top_cat = category_df.sort_values(
+        "Total Amount", ascending=False
+    ).iloc[0]
+
+    return {
+        "revenue_trend": trend,
+        "revenue_change_percent": change_pct,
+        "top_category": top_cat["Product Category"]
+    }
 
 # -----------------------------
 # LLM-powered query endpoint
