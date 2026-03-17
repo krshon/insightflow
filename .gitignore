@@ -8,3 +8,6 @@ __pycache__/
 # Virtual environment (if any)
 venv/
 .env/
+
+howtorun.txt
+

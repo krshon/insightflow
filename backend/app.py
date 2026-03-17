@@ -181,13 +181,14 @@ INSIGHT:
             "options": {"use_cache": False},
         }
 
-        HF_MODEL = "mistralai/Mistral-7B-Instruct-v0.2"
+        HF_MODEL = "google/flan-t5-large"
 
         response = requests.post(
-            f"https://router.huggingface.co/hf-inference/models/{HF_MODEL}",
-            headers=headers,
-            json=payload,
-            timeout=30,
+            "https://router.huggingface.co/models/google/flan-t5-large",
+            headers= {  "Authorization ": f"Bearer {HF_API_KEY}",  "Content-Type": "application/json"
+                       },
+            json={"inputs" : context},
+            timeout=60,
         )
         print("HF STATUS:", response.status_code)
         print("HF RESPONSE:", response.text)

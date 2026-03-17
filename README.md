@@ -1,6 +1,33 @@
-# Insight Flow
+# InsightFlow (CRICINSIGHT)
 
-Insight Flow is an LLM-powered business analytics platform that transforms natural language questions into actionable data insights and visualizations.
+InsightFlow is an AI-powered business intelligence system that integrates:
 
-The project focuses on analyzing transactional business data to uncover revenue trends, customer behavior, and product performance using Python, data analysis, and AI-driven insight generation.
-s
+- FastAPI for analytics APIs
+- Power BI for dashboard visualization
+- Hugging Face LLM for generating business insights
+
+## Features
+
+- Revenue analysis by category
+- Monthly revenue trend visualization
+- Customer segmentation insights
+- AI-generated executive summaries
+
+## Tech Stack
+
+- Python (FastAPI, Pandas)
+- Power BI
+- Hugging Face API
+
+## How to Run
+
+cd backend  
+uvicorn app:app --reload
+
+## Endpoints
+
+- /revenue/category
+- /revenue/monthly
+- /customers/segments
+- /insights
+- /query
