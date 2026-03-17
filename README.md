@@ -1,4 +1,4 @@
-# InsightFlow (CRICINSIGHT)
+# InsightFlow
 
 InsightFlow is an AI-powered business intelligence system that integrates:
 
