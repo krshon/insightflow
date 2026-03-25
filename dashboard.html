@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InsightFlow — Sales Intelligence</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f5f7;--surface:#fff;--surface2:#f8f9fb;--border:#e1e4ea;--border-strong:#cdd1da;
+  --sidebar:#1a1f2e;--accent:#0066cc;--accent-light:#e8f0fb;
+  --g1:#0066cc;--g2:#1a1f2e;--g3:#b54708;--g4:#117a3d;--g5:#6b21a8;--g6:#0891b2;
+  --text:#111827;--text2:#4b5563;--muted:#9ca3af;
+  --sh-sm:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.06);
+  --sh-md:0 4px 12px rgba(0,0,0,0.08),0 2px 6px rgba(0,0,0,0.06);
+  --r:6px;--rl:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ── SIDEBAR ── */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:230px;background:var(--sidebar);display:flex;flex-direction:column;z-index:200;}
+.sb-logo{padding:18px 18px 16px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:10px;}
+.logo-mk{width:32px;height:32px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;}
+.logo-nm{font-size:14px;font-weight:600;color:#fff;}
+.logo-vr{font-size:10px;color:#a8b0c4;font-family:'IBM Plex Mono',monospace;}
+.sb-sec{padding:14px 12px 4px;}
+.sb-lbl{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(168,176,196,.45);padding:0 8px 7px;}
+.nav-i{display:flex;align-items:center;gap:9px;padding:9px 8px;border-radius:5px;cursor:pointer;font-size:13px;color:#a8b0c4;transition:all .15s;margin-bottom:1px;}
+.nav-i:hover{background:rgba(255,255,255,.07);color:#fff;}
+.nav-i.active{background:rgba(0,102,204,.22);color:#5b9ef8;font-weight:500;}
+.nav-icon{font-size:13px;width:18px;text-align:center;}
+.nav-badge{margin-left:auto;font-size:10px;font-family:'IBM Plex Mono',monospace;background:rgba(255,255,255,.1);color:#a8b0c4;padding:2px 6px;border-radius:3px;}
+.sb-bottom{margin-top:auto;padding:14px 12px;border-top:1px solid rgba(255,255,255,.07);}
+.ws-row{display:flex;align-items:center;gap:9px;padding:8px;border-radius:5px;cursor:pointer;}
+.ws-row:hover{background:rgba(255,255,255,.06);}
+.ws-av{width:28px;height:28px;background:linear-gradient(135deg,#0066cc,#5b9ef8);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;}
+.ws-nm{font-size:12px;color:#fff;font-weight:500;}
+.ws-rl{font-size:10px;color:#a8b0c4;}
+
+/* ── MAIN ── */
+.main{margin-left:230px;min-height:100vh;display:flex;flex-direction:column;}
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 22px;height:50px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--sh-sm);}
+.bc{display:flex;align-items:center;gap:6px;font-size:13px;}
+.bc-s{color:var(--muted);}
+.bc-c{font-weight:600;}
+.bc-p{color:var(--muted);}
+.tb-right{display:flex;align-items:center;gap:8px;}
+.ri{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;display:flex;align-items:center;gap:5px;}
+.rdot{width:6px;height:6px;background:#16a34a;border-radius:50%;}
+
+/* ── TAB NAV ── */
+.tab-bar{background:#fff;border-bottom:1px solid var(--border);padding:0 22px;display:flex;align-items:center;}
+.tabs{display:flex;gap:0;}
+.tab{padding:14px 20px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;display:flex;align-items:center;gap:7px;white-space:nowrap;}
+.tab:hover{color:var(--text);background:var(--surface2);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
+.tab-icon{font-size:14px;}
+
+/* ── CANVAS ── */
+.canvas{padding:18px 22px;}
+
+/* ── PANEL VISIBILITY ── */
+.panel{display:none;}
+.panel.active{display:block;}
+
+/* ── KPI STRIP ── */
+.kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:var(--rl);padding:15px 16px;box-shadow:var(--sh-sm);cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.kpi:hover{box-shadow:var(--sh-md);transform:translateY(-1px);}
+.kpi::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--kc,var(--accent));border-radius:0 0 var(--rl) var(--rl);}
+.kpi-lbl{font-size:10.5px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px;}
+.kpi-val{font-size:22px;font-weight:700;letter-spacing:-.7px;line-height:1;}
+.kpi-foot{margin-top:6px;font-size:11px;display:flex;align-items:center;gap:5px;}
+.up{font-weight:600;font-family:'IBM Plex Mono',monospace;color:#117a3d;}
+.nm{color:var(--muted);}
+
+/* ── CHART CARDS ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.grid-2-1{display:grid;grid-template-columns:2fr 1fr;gap:12px;}
+.grid-1-2{display:grid;grid-template-columns:1fr 2fr;gap:12px;}
+.mt12{margin-top:12px;}
+
+.cc{background:#fff;border:1px solid var(--border);border-radius:var(--rl);box-shadow:var(--sh-sm);display:flex;flex-direction:column;overflow:hidden;transition:box-shadow .2s;}
+.cc:hover{box-shadow:var(--sh-md);}
+.cc-h{padding:12px 16px 9px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.cc-t{font-size:12.5px;font-weight:600;letter-spacing:-.1px;}
+.cc-s{font-size:10.5px;color:var(--muted);margin-top:1px;}
+.cc-acts{display:flex;gap:5px;align-items:center;}
+.ca{font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:3px;background:transparent;color:var(--muted);cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all .15s;}
+.ca:hover,.ca.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent);}
+.cc-b{padding:14px 16px;flex:1;}
+.tag{font-size:10px;font-family:'IBM Plex Mono',monospace;background:var(--accent-light);color:var(--accent);padding:3px 7px;border-radius:3px;font-weight:500;}
+.tag-g{background:#e6f4ed;color:#117a3d;}
+.tag-o{background:#fef3e2;color:#b54708;}
+
+/* ── INSIGHT BOX ── */
+.insight-box{background:var(--accent-light);border:1px solid rgba(0,102,204,.2);border-radius:var(--r);padding:12px 16px;margin-top:12px;display:flex;gap:12px;align-items:flex-start;}
+.ib-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+.ib-title{font-size:12px;font-weight:600;color:var(--accent);margin-bottom:3px;}
+.ib-text{font-size:12px;color:var(--text2);line-height:1.6;}
+.ib-text strong{color:var(--text);font-weight:600;}
+
+/* ── RFM SEGMENT CARDS ── */
+.seg-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px;}
+.seg-card{background:#fff;border:1px solid var(--border);border-radius:var(--rl);padding:14px 15px;box-shadow:var(--sh-sm);position:relative;overflow:hidden;cursor:pointer;transition:all .2s;}
+.seg-card:hover{box-shadow:var(--sh-md);transform:translateY(-1px);}
+.seg-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--sc,var(--accent));}
+.seg-name{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--sc,var(--accent));margin-bottom:8px;}
+.seg-count{font-size:24px;font-weight:700;letter-spacing:-.7px;line-height:1;}
+.seg-desc{font-size:10.5px;color:var(--muted);margin-top:4px;}
+.seg-rev{font-size:11px;font-weight:600;color:var(--text2);margin-top:6px;font-family:'IBM Plex Mono',monospace;}
+
+/* ── DATA TABLE ── */
+.dt{width:100%;border-collapse:collapse;}
+thead tr{background:var(--surface2);}
+th{padding:8px 14px;text-align:left;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);}
+td{padding:9px 14px;font-size:12px;color:var(--text2);border-bottom:1px solid #f3f4f6;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--surface2);}
+.td-n{font-weight:600;color:var(--text);}
+.td-mo{font-family:'IBM Plex Mono',monospace;font-size:11.5px;}
+.td-bar-w{display:flex;align-items:center;gap:7px;}
+.mini-t{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.mini-f{height:100%;border-radius:3px;}
+.bdg{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:3px;font-family:'IBM Plex Mono',monospace;}
+.bdg-b{background:var(--accent-light);color:var(--accent);}
+.bdg-g{background:#e6f4ed;color:#117a3d;}
+.bdg-o{background:#fef3e2;color:#b54708;}
+.bdg-p{background:#f3e8ff;color:#6b21a8;}
+.bdg-n{background:#f3f4f6;color:var(--muted);}
+
+/* ── CUSTOMER RANK ROWS ── */
+.cust-list{display:flex;flex-direction:column;gap:0;}
+.cust-row{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #f3f4f6;transition:background .15s;cursor:pointer;}
+.cust-row:hover{background:var(--surface2);}
+.cust-row:last-child{border-bottom:none;}
+.rank{width:22px;height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.rank-1{background:#fef3e2;color:#b54708;}
+.rank-2{background:#f0f7ff;color:#0066cc;}
+.rank-3{background:#e6f4ed;color:#117a3d;}
+.rank-n{background:#f3f4f6;color:var(--muted);}
+.cust-id{font-size:12px;font-weight:600;font-family:'IBM Plex Mono',monospace;flex:1;}
+.cust-rev{font-size:12.5px;font-weight:700;color:var(--text);min-width:70px;text-align:right;}
+.cust-seg{font-size:10px;font-weight:600;padding:2px 7px;border-radius:3px;font-family:'IBM Plex Mono',monospace;}
+.cust-orders{font-size:11px;color:var(--muted);min-width:55px;text-align:center;}
+
+/* ── LEGEND ITEMS ── */
+.legend-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.ld{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+.ll{font-size:11.5px;color:var(--text2);}
+.lv{font-size:12px;font-weight:700;margin-left:auto;color:var(--text);}
+.lm{font-size:10.5px;color:var(--muted);}
+
+/* ── CHAT ── */
+.chat-card{background:#fff;border:1px solid var(--border);border-radius:var(--rl);box-shadow:var(--sh-sm);display:flex;flex-direction:column;height:420px;overflow:hidden;}
+.chat-h{padding:11px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;background:var(--surface2);flex-shrink:0;}
+.chat-av{width:29px;height:29px;background:var(--accent);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;}
+.chat-nm{font-size:12.5px;font-weight:600;}
+.chat-st{font-size:10px;color:#16a34a;display:flex;align-items:center;gap:3px;}
+.sdot{width:5px;height:5px;background:#16a34a;border-radius:50%;}
+.cbadge{margin-left:auto;font-size:10px;font-family:'IBM Plex Mono',monospace;background:var(--accent-light);color:var(--accent);padding:3px 7px;border-radius:3px;}
+.msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+.msg{display:flex;gap:7px;animation:mi .25s ease;}
+@keyframes mi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.msg.user{flex-direction:row-reverse;}
+.mav{width:24px;height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;font-weight:700;}
+.mav.ai{background:var(--accent);color:#fff;}
+.mav.user{background:var(--sidebar);color:#fff;}
+.mbub{max-width:84%;padding:8px 12px;border-radius:6px;font-size:12px;line-height:1.6;}
+.msg.ai .mbub{background:var(--surface2);border:1px solid var(--border);color:var(--text2);border-top-left-radius:2px;}
+.msg.user .mbub{background:var(--accent);color:#fff;border-top-right-radius:2px;}
+.mbub strong{color:var(--accent);font-weight:600;}
+.msg.user .mbub strong{color:#c7deff;}
+.mbub .g{color:#117a3d;font-weight:600;}
+.mbub .o{color:#b54708;font-weight:600;}
+.qqs{padding:5px 12px 7px;display:flex;flex-wrap:wrap;gap:4px;border-top:1px solid var(--border);background:var(--surface2);}
+.qq{font-size:11px;padding:4px 8px;border-radius:3px;border:1px solid var(--border-strong);background:#fff;color:var(--text2);cursor:pointer;transition:all .15s;font-family:'IBM Plex Sans',sans-serif;}
+.qq:hover{background:var(--accent-light);border-color:var(--accent);color:var(--accent);}
+.cinput-row{padding:9px 12px;border-top:1px solid var(--border);display:flex;gap:7px;align-items:center;flex-shrink:0;}
+.cinput{flex:1;font-family:'IBM Plex Sans',sans-serif;font-size:12px;padding:7px 11px;border:1px solid var(--border-strong);border-radius:4px;background:#fff;color:var(--text);outline:none;transition:border-color .15s;}
+.cinput:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(0,102,204,.1);}
+.cinput::placeholder{color:var(--muted);}
+.sbtn{width:32px;height:32px;background:var(--accent);border:none;border-radius:4px;cursor:pointer;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sbtn:hover{background:#0052a3;}
+.typing{display:flex;align-items:center;gap:4px;padding:2px 0;}
+.tdot{width:5px;height:5px;background:var(--muted);border-radius:50%;animation:bl 1.2s infinite;}
+.tdot:nth-child(2){animation-delay:.2s;}
+.tdot:nth-child(3){animation-delay:.4s;}
+@keyframes bl{0%,80%,100%{opacity:.3}40%{opacity:1}}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:4px;}
+
+/* ── AGE HEATMAP ── */
+.heatmap{width:100%;border-collapse:collapse;}
+.heatmap th{padding:8px 12px;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:center;border-bottom:1px solid var(--border);}
+.heatmap th:first-child{text-align:left;}
+.heatmap td{padding:10px 12px;text-align:center;font-size:12px;font-family:'IBM Plex Mono',monospace;font-weight:500;border-bottom:1px solid #f3f4f6;position:relative;}
+.heatmap td:first-child{text-align:left;font-family:'IBM Plex Sans',monospace;font-weight:600;font-size:12px;color:var(--text);}
+.hm-cell{display:inline-flex;align-items:center;justify-content:center;border-radius:4px;padding:4px 8px;min-width:75px;font-size:11.5px;}
+
+/* ── ANIMATIONS ── */
+.kpi,.cc,.seg-card{animation:fu .4s ease both;}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ── FLOATING CHATBOT ── */
+.chat-fab{position:fixed;bottom:28px;right:28px;width:46px;height:46px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(0,102,204,.45);font-size:20px;z-index:500;transition:transform .2s,box-shadow .2s;}
+.chat-fab:hover{transform:scale(1.08);box-shadow:0 6px 22px rgba(0,102,204,.55);}
+.chat-float{position:fixed;bottom:86px;right:28px;width:360px;height:480px;background:#fff;border:1px solid var(--border);border-radius:var(--rl);box-shadow:0 8px 32px rgba(0,0,0,0.14);display:flex;flex-direction:column;overflow:hidden;z-index:499;transition:opacity .2s,transform .2s;transform-origin:bottom right;}
+.chat-float.hidden{opacity:0;transform:scale(0.92);pointer-events:none;}
+.chat-h{padding:11px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;background:var(--sidebar);flex-shrink:0;}
+.chat-av{width:29px;height:29px;background:var(--accent);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;}
+.chat-nm{font-size:12.5px;font-weight:600;color:#fff;}
+.chat-st{font-size:10px;color:#4ade80;display:flex;align-items:center;gap:3px;}
+.sdot{width:5px;height:5px;background:#4ade80;border-radius:50%;}
+.chat-close{margin-left:auto;color:#a8b0c4;cursor:pointer;font-size:18px;line-height:1;padding:0 2px;}
+.chat-close:hover{color:#fff;}
+.msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+.msg{display:flex;gap:7px;animation:mi .25s ease;}
+@keyframes mi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.msg.user{flex-direction:row-reverse;}
+.mav{width:24px;height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;font-weight:700;}
+.mav.ai{background:var(--accent);color:#fff;}
+.mav.user{background:var(--sidebar);color:#fff;}
+.mbub{max-width:84%;padding:8px 12px;border-radius:6px;font-size:12px;line-height:1.6;}
+.msg.ai .mbub{background:var(--surface2);border:1px solid var(--border);color:var(--text2);border-top-left-radius:2px;}
+.msg.user .mbub{background:var(--accent);color:#fff;border-top-right-radius:2px;}
+.mbub strong{color:var(--accent);font-weight:600;}
+.msg.user .mbub strong{color:#c7deff;}
+.mbub .g{color:#117a3d;font-weight:600;}
+.mbub .o{color:#b54708;font-weight:600;}
+.qqs{padding:5px 12px 7px;display:flex;flex-wrap:wrap;gap:4px;border-top:1px solid var(--border);background:var(--surface2);}
+.qq{font-size:11px;padding:4px 8px;border-radius:3px;border:1px solid var(--border-strong);background:#fff;color:var(--text2);cursor:pointer;transition:all .15s;font-family:'IBM Plex Sans',sans-serif;}
+.qq:hover{background:var(--accent-light);border-color:var(--accent);color:var(--accent);}
+.cinput-row{padding:9px 12px;border-top:1px solid var(--border);display:flex;gap:7px;align-items:center;flex-shrink:0;}
+.cinput{flex:1;font-family:'IBM Plex Sans',sans-serif;font-size:12px;padding:7px 11px;border:1px solid var(--border-strong);border-radius:4px;background:#fff;color:var(--text);outline:none;transition:border-color .15s;}
+.cinput:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(0,102,204,.1);}
+.cinput::placeholder{color:var(--muted);}
+.sbtn{width:32px;height:32px;background:var(--accent);border:none;border-radius:4px;cursor:pointer;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sbtn:hover{background:#0052a3;}
+.typing{display:flex;align-items:center;gap:4px;padding:2px 0;}
+.tdot{width:5px;height:5px;background:var(--muted);border-radius:50%;animation:bl 1.2s infinite;}
+.tdot:nth-child(2){animation-delay:.2s;}
+.tdot:nth-child(3){animation-delay:.4s;}
+@keyframes bl{0%,80%,100%{opacity:.3}40%{opacity:1}}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:4px;}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="logo-mk">IF</div>
+    <div><div class="logo-nm">InsightFlow</div><div class="logo-vr">v2.2 · analytics</div></div>
+  </div>
+  <div class="sb-sec">
+    <div class="sb-lbl">Analysis</div>
+    <div class="nav-i active" onclick="switchTab('gender');setSideActive(this)"><span class="nav-icon">◑</span> Gender × Category</div>
+    <div class="nav-i" onclick="switchTab('rfm');setSideActive(this)"><span class="nav-icon">◈</span> Customer RFM</div>
+    <div class="nav-i" onclick="switchTab('age');setSideActive(this)"><span class="nav-icon">◐</span> Age Group Analysis</div>
+  </div>
+  <div class="sb-bottom">
+    <div class="ws-row">
+      <div class="ws-av">SA</div>
+      <div><div class="ws-nm">Sales Analytics</div><div class="ws-rl">Admin · Pro workspace</div></div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="bc"><span class="bc-p">Reports</span><span class="bc-s">›</span><span class="bc-p">Deep Analysis</span><span class="bc-s">›</span><span class="bc-c" id="bc-cur">Gender × Category</span></div>
+    <div class="tb-right">
+      <div class="ri"><div class="rdot"></div> 1,000 transactions · FY 2023</div>
+    </div>
+  </div>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <div class="tabs">
+      <div class="tab active" id="tab-gender" onclick="switchTab('gender')">
+        <span class="tab-icon">◑</span> Gender × Category
+      </div>
+      <div class="tab" id="tab-rfm" onclick="switchTab('rfm')">
+        <span class="tab-icon">◈</span> Customer RFM
+      </div>
+      <div class="tab" id="tab-age" onclick="switchTab('age')">
+        <span class="tab-icon">◐</span> Age Group Analysis
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════ PANEL 1: GENDER × CATEGORY ═══════════════ -->
+  <div class="canvas panel active" id="panel-gender">
+
+    <!-- KPI Strip -->
+    <div class="kpi-strip">
+      <div class="kpi" style="--kc:#0066cc">
+        <div class="kpi-lbl">Female Revenue</div>
+        <div class="kpi-val">$229K</div>
+        <div class="kpi-foot"><span class="up" style="color:#0066cc">51.0%</span><span class="nm">of total</span></div>
+      </div>
+      <div class="kpi" style="--kc:#1a1f2e">
+        <div class="kpi-lbl">Male Revenue</div>
+        <div class="kpi-val">$250K</div>
+        <div class="kpi-foot"><span class="up" style="color:#1a1f2e">49.0%</span><span class="nm">of total</span></div>
+      </div>
+      <div class="kpi" style="--kc:#117a3d">
+        <div class="kpi-lbl">Female Avg. Order</div>
+        <div class="kpi-val">$496</div>
+        <div class="kpi-foot"><span class="up">vs $448 Male</span></div>
+      </div>
+      <div class="kpi" style="--kc:#b54708">
+        <div class="kpi-lbl">F: Top Category</div>
+        <div class="kpi-val" style="font-size:16px;padding-top:4px">Electronics</div>
+        <div class="kpi-foot"><span class="up" style="color:#b54708">$88K</span><span class="nm">38.4%</span></div>
+      </div>
+      <div class="kpi" style="--kc:#6b21a8">
+        <div class="kpi-lbl">M: Top Category</div>
+        <div class="kpi-val" style="font-size:16px;padding-top:4px">Electronics</div>
+        <div class="kpi-foot"><span class="up" style="color:#6b21a8">$106K</span><span class="nm">42.5%</span></div>
+      </div>
+    </div>
+
+    <div class="grid-2-1">
+      <!-- Grouped Bar: Gender × Category -->
+      <div class="cc">
+        <div class="cc-h">
+          <div><div class="cc-t">Revenue by Gender × Category</div><div class="cc-s">Click bars to highlight · Compare female vs male per segment</div></div>
+          <div class="cc-acts">
+            <button class="ca active" onclick="swGC('grouped',this)">Grouped</button>
+            <button class="ca" onclick="swGC('stacked',this)">Stacked</button>
+            <button class="ca" onclick="swGC('pct',this)">100%</button>
+          </div>
+        </div>
+        <div class="cc-b"><div style="height:240px;position:relative"><canvas id="gcChart"></canvas></div></div>
+      </div>
+
+      <!-- Donut by gender -->
+      <div class="cc">
+        <div class="cc-h">
+          <div><div class="cc-t">Avg. Transaction Value</div><div class="cc-s">Female vs Male by category</div></div>
+        </div>
+        <div class="cc-b">
+          <div style="height:240px;position:relative"><canvas id="avgChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid3 mt12">
+      <!-- Female Breakdown -->
+      <div class="cc">
+        <div class="cc-h">
+          <div><div class="cc-t">Female Revenue Mix</div><div class="cc-s">$228,510 total</div></div>
+          <span class="tag">FEMALE</span>
+        </div>
+        <div class="cc-b">
+          <div style="height:150px;position:relative;margin-bottom:14px"><canvas id="fDonut"></canvas></div>
+          <div>
+            <div class="legend-row"><div class="ld" style="background:#0066cc"></div><span class="ll">Electronics</span><span class="lv">$87,970</span></div>
+            <div style="font-size:10.5px;color:var(--muted);margin:0 0 8px 18px">38.5% · avg $533 · 165 txns</div>
+            <div class="legend-row"><div class="ld" style="background:#b54708"></div><span class="ll">Clothing</span><span class="lv">$76,875</span></div>
+            <div style="font-size:10.5px;color:var(--muted);margin:0 0 8px 18px">33.6% · avg $516 · 149 txns</div>
+            <div class="legend-row"><div class="ld" style="background:#1a1f2e"></div><span class="ll">Beauty</span><span class="lv">$64,565</span></div>
+            <div style="font-size:10.5px;color:var(--muted);margin:0 0 0 18px">28.2% · avg $445 · 145 txns</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Male Breakdown -->
+      <div class="cc">
+        <div class="cc-h">
+          <div><div class="cc-t">Male Revenue Mix</div><div class="cc-s">$249,901 total</div></div>
+          <span class="tag" style="background:#1a2035;color:#a8b0c4">MALE</span>
+        </div>
+        <div class="cc-b">
+          <div style="height:150px;position:relative;margin-bottom:14px"><canvas id="mDonut"></canvas></div>
+          <div>
+            <div class="legend-row"><div class="ld" style="background:#0066cc"></div><span class="ll">Electronics</span><span class="lv">$106,421</span></div>
+            <div style="font-size:10.5px;color:var(--muted);margin:0 0 8px 18px">42.6% · avg $451 · 236 txns</div>
+            <div class="legend-row"><div class="ld" style="background:#b54708"></div><span class="ll">Clothing</span><span class="lv">$81,240</span></div>
+            <div style="font-size:10.5px;color:var(--muted);margin:0 0 8px 18px">32.5% · avg $478 · 170 txns</div>
+            <div class="legend-row"><div class="ld" style="background:#1a1f2e"></div><span class="ll">Beauty</span><span class="lv">$62,240</span></div>
+            <div style="font-size:10.5px;color:var(--muted);margin:0 0 0 18px">24.9% · avg $415 · 150 txns</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transaction count table -->
+      <div class="cc">
+        <div class="cc-h">
+          <div><div class="cc-t">Transaction Volume</div><div class="cc-s">Count by gender × category</div></div>
+        </div>
+        <div class="cc-b" style="padding:0">
+          <table class="dt">
+            <thead><tr><th>Segment</th><th>Txns</th><th>Avg $</th><th>Share</th></tr></thead>
+            <tbody>
+              <tr><td class="td-n">F · Electronics</td><td class="td-mo">165</td><td class="td-mo">$533</td><td><span class="bdg bdg-b">38.5%</span></td></tr>
+              <tr><td class="td-n">M · Electronics</td><td class="td-mo">236</td><td class="td-mo">$451</td><td><span class="bdg bdg-b">42.6%</span></td></tr>
+              <tr><td class="td-n">F · Clothing</td><td class="td-mo">149</td><td class="td-mo">$516</td><td><span class="bdg bdg-o">33.6%</span></td></tr>
+              <tr><td class="td-n">M · Clothing</td><td class="td-mo">170</td><td class="td-mo">$478</td><td><span class="bdg bdg-o">32.5%</span></td></tr>
+              <tr><td class="td-n">F · Beauty</td><td class="td-mo">145</td><td class="td-mo">$445</td><td><span class="bdg bdg-n">28.2%</span></td></tr>
+              <tr><td class="td-n">M · Beauty</td><td class="td-mo">150</td><td class="td-mo">$415</td><td><span class="bdg bdg-n">24.9%</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="insight-box">
+      <div class="ib-icon">💡</div>
+      <div>
+        <div class="ib-title">AI Insight — Gender × Category</div>
+        <div class="ib-text"><strong>Male customers dominate Electronics</strong> with $106K (42.6% of male spend) vs Female $88K (38.5%). However, <strong>Female average transaction value is higher</strong> ($496 vs $448), particularly in Clothing ($516 vs $478). <strong>Beauty is the most gender-balanced</strong> category (F: $64.6K / M: $62.2K). Consider targeted Electronics promotions for female customers and premium Clothing campaigns for male customers to close the spend gap.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PANEL 2: RFM ═══════════════ -->
+  <div class="canvas panel" id="panel-rfm">
+
+    <!-- Segment summary cards -->
+    <div class="seg-grid">
+      <div class="seg-card" style="--sc:#b54708">
+        <div class="seg-name">🏆 Champions</div>
+        <div class="seg-count">312</div>
+        <div class="seg-desc">High value · Recent · Frequent</div>
+        <div class="seg-rev">$189,240 revenue</div>
+      </div>
+      <div class="seg-card" style="--sc:#0066cc">
+        <div class="seg-name">💎 Loyal</div>
+        <div class="seg-count">198</div>
+        <div class="seg-desc">Consistent spenders</div>
+        <div class="seg-rev">$124,850 revenue</div>
+      </div>
+      <div class="seg-card" style="--sc:#117a3d">
+        <div class="seg-name">🆕 Recent</div>
+        <div class="seg-count">87</div>
+        <div class="seg-desc">New or just returned</div>
+        <div class="seg-rev">$38,650 revenue</div>
+      </div>
+      <div class="seg-card" style="--sc:#6b21a8">
+        <div class="seg-name">⚠️ At Risk</div>
+        <div class="seg-count">244</div>
+        <div class="seg-desc">Declining engagement</div>
+        <div class="seg-rev">$78,920 revenue</div>
+      </div>
+      <div class="seg-card" style="--sc:#9ca3af">
+        <div class="seg-name">💤 Dormant</div>
+        <div class="seg-count">159</div>
+        <div class="seg-desc">Low value · Inactive</div>
+        <div class="seg-rev">$24,340 revenue</div>
+      </div>
+    </div>
+
+    <div class="grid-1-2">
+      <!-- Segment donut -->
+      <div class="cc">
+        <div class="cc-h">
+          <div><div class="cc-t">Segment Distribution</div><div class="cc-s">1,000 customers by RFM score</div></div>
+        </div>
+        <div class="cc-b" style="display:flex;align-items:center;gap:16px">
+          <div style="height:200px;flex:0 0 200px;position:relative"><canvas id="rfmDonut"></canvas></div>
+          <div style="flex:1">
+            <div class="legend-row"><div class="ld" style="background:#b54708"></div><span class="ll">Champions</span><span class="lv">31.2%</span></div>
+            <div class="legend-row"><div class="ld" style="background:#0066cc"></div><span class="ll">Loyal</span><span class="lv">19.8%</span></div>
+            <div class="legend-row"><div class="ld" style="background:#117a3d"></div><span class="ll">Recent</span><span class="lv">8.7%</span></div>
+            <div class="legend-row"><div class="ld" style="background:#6b21a8"></div><span class="ll">At Risk</span><span class="lv">24.4%</span></div>
+            <div class="legend-row"><div class="ld" style="background:#d1d5db"></div><span class="ll">Dormant</span><span class="lv">15.9%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top 10 customers -->
+      <div class="cc">
+        <div class="cc-h">
+          <div><div class="cc-t">Top 10 Customers by Lifetime Value</div><div class="cc-s">Ranked by total spend · FY 2023</div></div>
+          <span class="tag tag-g">HIGH VALUE</span>
+        </div>
+        <div class="cc-b" style="padding:0">
+          <div class="cust-list">
+            <div class="cust-row"><div class="rank rank-1">1</div><div class="cust-id">CUST015</div><div class="cust-orders">1 order</div><span class="cust-seg bdg bdg-o">Champion</span><div class="cust-rev">$2,000</div></div>
+            <div class="cust-row"><div class="rank rank-1">2</div><div class="cust-id">CUST072</div><div class="cust-orders">1 order</div><span class="cust-seg bdg bdg-o">Champion</span><div class="cust-rev">$2,000</div></div>
+            <div class="cust-row"><div class="rank rank-1">3</div><div class="cust-id">CUST074</div><div class="cust-orders">1 order</div><span class="cust-seg bdg bdg-o">Champion</span><div class="cust-rev">$2,000</div></div>
+            <div class="cust-row"><div class="rank rank-2">4</div><div class="cust-id">CUST093</div><div class="cust-orders">1 order</div><span class="cust-seg bdg bdg-b">Loyal</span><div class="cust-rev">$2,000</div></div>
+            <div class="cust-row"><div class="rank rank-2">5</div><div class="cust-id">CUST109</div><div class="cust-orders">1 order</div><span class="cust-seg bdg bdg-b">Loyal</span><div class="cust-rev">$2,000</div></div>
+            <div class="cust-row"><div class="rank rank-2">6</div><div class="cust-id">CUST118</div><div class="cust-orders">1 order</div><span class="cust-seg bdg bdg-b">Loyal</span><div class="cust-rev">$2,000</div></div>
+            <div class="cust-row"><div class="rank rank-3">7</div><div class="cust-id">CUST139</div><div class="cust-orders">1 order</div><span class="cust-seg bdg bdg-g">Recent</span><div class="cust-rev">$2,000</div></div>
+            <div class="cust-row"><div class="rank rank-3">8</div><div class="cust-id">CUST152</div><div class="cust-orders">1 order</div><span class="cust-seg bdg bdg-g">Recent</span><div class="cust-rev">$2,000</div></div>
+            <div class="cust-row"><div class="rank rank-n">9</div><div class="cust-id">CUST155</div><div class="cust-orders">1 order</div><span class="cust-seg bdg bdg-p">At Risk</span><div class="cust-rev">$2,000</div></div>
+            <div class="cust-row"><div class="rank rank-n">10</div><div class="cust-id">CUST157</div><div class="cust-orders">1 order</div><span class="cust-seg bdg bdg-p">At Risk</span><div class="cust-rev">$2,000</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2 mt12">
+      <!-- Revenue by segment bar -->
+      <div class="cc">
+        <div class="cc-h">
+          <div><div class="cc-t">Revenue Contribution by Segment</div><div class="cc-s">Total $456K across all segments</div></div>
+        </div>
+        <div class="cc-b"><div style="height:200px;position:relative"><canvas id="rfmRevChart"></canvas></div></div>
+      </div>
+
+      <!-- RFM action table -->
+      <div class="cc">
+        <div class="cc-h">
+          <div><div class="cc-t">Segment Action Plan</div><div class="cc-s">AI-recommended next steps per segment</div></div>
+          <span class="tag">AI POWERED</span>
+        </div>
+        <div class="cc-b" style="padding:0">
+          <table class="dt">
+            <thead><tr><th>Segment</th><th>Count</th><th>Revenue</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr><td><span class="bdg bdg-o">Champions</span></td><td class="td-mo">312</td><td class="td-mo">$189K</td><td style="font-size:11px">Reward & upsell</td></tr>
+              <tr><td><span class="bdg bdg-b">Loyal</span></td><td class="td-mo">198</td><td class="td-mo">$125K</td><td style="font-size:11px">Loyalty program</td></tr>
+              <tr><td><span class="bdg bdg-g">Recent</span></td><td class="td-mo">87</td><td class="td-mo">$39K</td><td style="font-size:11px">Onboard & engage</td></tr>
+              <tr><td><span class="bdg bdg-p">At Risk</span></td><td class="td-mo">244</td><td class="td-mo">$79K</td><td style="font-size:11px">Win-back campaign</td></tr>
+              <tr><td><span class="bdg bdg-n">Dormant</span></td><td class="td-mo">159</td><td class="td-mo">$24K</td><td style="font-size:11px">Re-engagement offer</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="insight-box">
+      <div class="ib-icon">💡</div>
+      <div>
+        <div class="ib-title">AI Insight — Customer RFM</div>
+        <div class="ib-text"><strong>Champions (31.2%) drive 41.5% of revenue ($189K)</strong> — your most critical segment to protect. <strong>At-Risk customers (24.4%) represent $79K in recoverable revenue</strong> — a win-back campaign targeting this group could yield significant returns. Since this dataset has 1 transaction per customer, RFM scoring is based on recency and monetary value. <strong>Recommended priority:</strong> (1) Reward Champions with exclusive offers, (2) Launch win-back for At-Risk, (3) Convert Recent buyers into Loyal with a second-purchase incentive within 30 days.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PANEL 3: AGE GROUP ═══════════════ -->
+  <div class="canvas panel" id="panel-age">
+
+    <!-- KPI Strip -->
+    <div class="kpi-strip">
+      <div class="kpi" style="--kc:#6b21a8">
+        <div class="kpi-lbl">Top Age Group</div>
+        <div class="kpi-val" style="font-size:18px;padding-top:3px">46–55</div>
+        <div class="kpi-foot"><span class="up" style="color:#6b21a8">$138K</span><span class="nm">30.2% share</span></div>
+      </div>
+      <div class="kpi" style="--kc:#0066cc">
+        <div class="kpi-lbl">Highest Avg Order</div>
+        <div class="kpi-val" style="font-size:18px;padding-top:3px">18–25</div>
+        <div class="kpi-foot"><span class="up">$589</span><span class="nm">avg per txn</span></div>
+      </div>
+      <div class="kpi" style="--kc:#b54708">
+        <div class="kpi-lbl">Most Transactions</div>
+        <div class="kpi-val" style="font-size:18px;padding-top:3px">46–55</div>
+        <div class="kpi-foot"><span class="up" style="color:#b54708">284 orders</span><span class="nm">28.4% volume</span></div>
+      </div>
+      <div class="kpi" style="--kc:#117a3d">
+        <div class="kpi-lbl">Electronics Leader</div>
+        <div class="kpi-val" style="font-size:18px;padding-top:3px">46–55</div>
+        <div class="kpi-foot"><span class="up">$54K</span><span class="nm">in electronics</span></div>
+      </div>
+      <div class="kpi" style="--kc:#0891b2">
+        <div class="kpi-lbl">Beauty Leader</div>
+        <div class="kpi-val" style="font-size:18px;padding-top:3px">46–55</div>
+        <div class="kpi-foot"><span class="up" style="color:#0891b2">$39K</span><span class="nm">in beauty</span></div>
+      </div>
+    </div>
+
+    <div class="grid-2-1">
+      <!-- Age group stacked bar -->
+      <div class="cc">
+        <div class="cc-h">
+          <div><div class="cc-t">Revenue by Age Group × Category</div><div class="cc-s">Click bars to isolate · Compare category preference across age</div></div>
+          <div class="cc-acts">
+            <button class="ca active" onclick="swAge('stacked',this)">Stacked</button>
+            <button class="ca" onclick="swAge('grouped',this)">Grouped</button>
+            <button class="ca" onclick="swAge('line',this)">Trend</button>
+          </div>
+        </div>
+        <div class="cc-b"><div style="height:240px;position:relative"><canvas id="ageChart"></canvas></div></div>
+      </div>
+
+      <!-- Avg order radar / bar -->
+      <div class="cc">
+        <div class="cc-h">
+          <div><div class="cc-t">Avg Transaction by Age</div><div class="cc-s">Spend power comparison</div></div>
+        </div>
+        <div class="cc-b"><div style="height:240px;position:relative"><canvas id="ageAvgChart"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- Heatmap -->
+    <div class="cc mt12">
+      <div class="cc-h">
+        <div><div class="cc-t">Revenue Heatmap — Age Group × Category</div><div class="cc-s">Colour intensity = revenue magnitude</div></div>
+        <span class="tag tag-o">HEATMAP</span>
+      </div>
+      <div class="cc-b" style="padding:16px">
+        <table class="heatmap">
+          <thead>
+            <tr>
+              <th>Age Group</th>
+              <th>Beauty</th>
+              <th>Clothing</th>
+              <th>Electronics</th>
+              <th>Total</th>
+              <th>Avg Order</th>
+              <th>Transactions</th>
+            </tr>
+          </thead>
+          <tbody id="heatmapBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid2 mt12">
+      <!-- Pie by age -->
+      <div class="cc">
+        <div class="cc-h">
+          <div><div class="cc-t">Revenue Share by Age Group</div><div class="cc-s">Proportional contribution to total</div></div>
+        </div>
+        <div class="cc-b" style="display:flex;align-items:center;gap:18px">
+          <div style="height:200px;flex:0 0 200px;position:relative"><canvas id="agePieChart"></canvas></div>
+          <div style="flex:1">
+            <div class="legend-row"><div class="ld" style="background:#6b21a8"></div><span class="ll">46–55</span><span class="lv">$138K</span><span class="lm" style="margin-left:6px">30.2%</span></div>
+            <div class="legend-row"><div class="ld" style="background:#0066cc"></div><span class="ll">26–35</span><span class="lv">$101K</span><span class="lm" style="margin-left:6px">22.0%</span></div>
+            <div class="legend-row"><div class="ld" style="background:#b54708"></div><span class="ll">36–45</span><span class="lv">$87K</span><span class="lm" style="margin-left:6px">19.1%</span></div>
+            <div class="legend-row"><div class="ld" style="background:#0891b2"></div><span class="ll">56–65</span><span class="lv">$82K</span><span class="lm" style="margin-left:6px">18.0%</span></div>
+            <div class="legend-row"><div class="ld" style="background:#117a3d"></div><span class="ll">18–25</span><span class="lv">$71K</span><span class="lm" style="margin-left:6px">15.6%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category preference by age line -->
+      <div class="cc">
+        <div class="cc-h">
+          <div><div class="cc-t">Category Preference Shift by Age</div><div class="cc-s">How spending priorities change with age</div></div>
+        </div>
+        <div class="cc-b"><div style="height:200px;position:relative"><canvas id="ageTrendChart"></canvas></div></div>
+      </div>
+    </div>
+
+    <div class="insight-box">
+      <div class="ib-icon">💡</div>
+      <div>
+        <div class="ib-title">AI Insight — Age Group Analysis</div>
+        <div class="ib-text"><strong>46–55 is your highest-value segment</strong> ($138K, 284 transactions) — dominating all three categories. Surprisingly, <strong>18–25 year-olds have the highest average transaction ($589)</strong>, suggesting they buy fewer but more expensive items. <strong>Electronics preference peaks in 18–25 and 36–45</strong> groups, while <strong>Clothing peaks in 26–35 and 46–55</strong>. Beauty spend is most consistent across ages. <strong>Strategy:</strong> Target 18–25 with premium electronics bundles, focus 26–35 on fashion loyalty programs, and maximize 46–55 with cross-category promotions across all three verticals.</div>
+      </div>
+    </div>
+
+  </div><!-- end panel-age -->
+
+</div><!-- end main -->
+
+<!-- ── FLOATING CHATBOT ── -->
+<div class="chat-float hidden" id="chatFloat">
+  <div class="chat-h">
+    <div class="chat-av">AI</div>
+    <div>
+      <div class="chat-nm">InsightFlow AI</div>
+      <div class="chat-st"><div class="sdot"></div>Analyzing your data</div>
+    </div>
+    <div class="chat-close" onclick="toggleChat()">✕</div>
+  </div>
+  <div class="msgs" id="msgs">
+    <div class="msg ai">
+      <div class="mav ai">AI</div>
+      <div class="mbub">Hello! I can explain any chart, trend, or metric from your 2023 sales data. Try asking about <strong>age groups</strong>, <strong>gender patterns</strong>, or <strong>customer segments</strong>.</div>
+    </div>
+  </div>
+  <div class="qqs">
+    <div class="qq" onclick="askQ('Best performing age group?')">Best age group?</div>
+    <div class="qq" onclick="askQ('Gender spending patterns?')">Gender split?</div>
+    <div class="qq" onclick="askQ('Top customer segment?')">Top segment?</div>
+    <div class="qq" onclick="askQ('Full data summary')">Summary</div>
+  </div>
+  <div class="cinput-row">
+    <input type="text" class="cinput" id="cinput" placeholder="Ask about your data…" onkeydown="if(event.key==='Enter')sendMsg()">
+    <button class="sbtn" onclick="sendMsg()">→</button>
+  </div>
+</div>
+<div class="chat-fab" id="chatFab" onclick="toggleChat()" title="Ask InsightFlow AI">💬</div>
+
+<script>
+// ── CHART DEFAULTS ──────────────────────────────────────────────
+const TT={backgroundColor:'#1a1f2e',borderColor:'rgba(255,255,255,.1)',borderWidth:1,titleColor:'#a8b0c4',bodyColor:'#fff',titleFont:{family:"'IBM Plex Mono',monospace",size:10},bodyFont:{family:"'IBM Plex Sans',sans-serif",size:12},padding:10,cornerRadius:5};
+const ttMoney={...TT,callbacks:{label:c=>' $'+c.raw.toLocaleString()}};
+const SC={x:{grid:{color:'rgba(0,0,0,0.04)',drawBorder:false},ticks:{color:'#9ca3af',font:{family:"'IBM Plex Mono',monospace",size:10},maxRotation:0}},y:{grid:{color:'rgba(0,0,0,0.05)',drawBorder:false},ticks:{color:'#9ca3af',font:{family:"'IBM Plex Mono',monospace",size:10},callback:v=>'$'+(v/1000).toFixed(0)+'k'},border:{dash:[3,3]}}};
+
+// ── GENDER × CATEGORY ──────────────────────────────────────────
+const CATS=['Beauty','Clothing','Electronics'];
+const GF=[64565,76875,87970];
+const GM=[62240,81240,106421];
+let gcType='grouped';
+let gcChart;
+
+function buildGC(){
+  const isp=gcType==='pct';
+  const fD=isp?[50.9,48.6,45.2]:GF;
+  const mD=isp?[49.1,51.4,54.8]:GM;
+  return{type:'bar',data:{labels:CATS,datasets:[
+    {label:'Female',data:fD,backgroundColor:'rgba(0,102,204,.8)',borderColor:'#0066cc',borderWidth:1.5,borderRadius:4,borderSkipped:false},
+    {label:'Male',data:mD,backgroundColor:'rgba(26,31,46,.8)',borderColor:'#1a1f2e',borderWidth:1.5,borderRadius:4,borderSkipped:false}
+  ]},options:{responsive:true,maintainAspectRatio:false,stacked:gcType==='stacked'||isp,plugins:{legend:{display:true,position:'bottom',labels:{color:'#6b7280',font:{family:"'IBM Plex Mono',monospace",size:10},boxWidth:9,padding:10}},tooltip:{...TT,callbacks:{label:c=>` ${c.dataset.label}: ${isp?c.raw+'%':'$'+c.raw.toLocaleString()}`}}},scales:isp?{...SC,y:{...SC.y,max:100,ticks:{...SC.y.ticks,callback:v=>v+'%'}}}:SC,animation:{duration:600,easing:'easeOutQuart'}}};
+}
+function swGC(t,b){gcType=t;document.querySelectorAll('#panel-gender .ca').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(gcChart)gcChart.destroy();gcChart=new Chart(document.getElementById('gcChart'),buildGC());}
+gcChart=new Chart(document.getElementById('gcChart'),buildGC());
+
+// Avg transaction radar
+new Chart(document.getElementById('avgChart'),{type:'bar',data:{labels:CATS,datasets:[
+  {label:'Female Avg $',data:[445,516,533],backgroundColor:'rgba(0,102,204,.75)',borderColor:'#0066cc',borderWidth:1.5,borderRadius:4,borderSkipped:false},
+  {label:'Male Avg $',data:[415,478,451],backgroundColor:'rgba(26,31,46,.75)',borderColor:'#1a1f2e',borderWidth:1.5,borderRadius:4,borderSkipped:false}
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{color:'#6b7280',font:{family:"'IBM Plex Mono',monospace",size:10},boxWidth:9,padding:10}},tooltip:ttMoney},scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#9ca3af',font:{family:"'IBM Plex Mono',monospace",size:10}}},y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#9ca3af',font:{family:"'IBM Plex Mono',monospace",size:10},callback:v=>'$'+v}}},animation:{duration:700,easing:'easeOutQuart'}}});
+
+// Female donut
+new Chart(document.getElementById('fDonut'),{type:'doughnut',data:{labels:['Electronics','Clothing','Beauty'],datasets:[{data:[87970,76875,64565],backgroundColor:['#0066cc','#b54708','#1a1f2e'],borderColor:['#fff','#fff','#fff'],borderWidth:3,hoverOffset:6}]},options:{cutout:'66%',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>` ${c.label}: $${c.raw.toLocaleString()}`}}},animation:{duration:800,easing:'easeOutQuart'}}});
+
+// Male donut
+new Chart(document.getElementById('mDonut'),{type:'doughnut',data:{labels:['Electronics','Clothing','Beauty'],datasets:[{data:[106421,81240,62240],backgroundColor:['#0066cc','#b54708','#1a1f2e'],borderColor:['#fff','#fff','#fff'],borderWidth:3,hoverOffset:6}]},options:{cutout:'66%',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>` ${c.label}: $${c.raw.toLocaleString()}`}}},animation:{duration:800,easing:'easeOutQuart'}}});
+
+// ── RFM CHARTS ──────────────────────────────────────────────────
+new Chart(document.getElementById('rfmDonut'),{type:'doughnut',data:{labels:['Champions','Loyal','Recent','At Risk','Dormant'],datasets:[{data:[312,198,87,244,159],backgroundColor:['#b54708','#0066cc','#117a3d','#6b21a8','#d1d5db'],borderColor:['#fff','#fff','#fff','#fff','#fff'],borderWidth:3,hoverOffset:7}]},options:{cutout:'62%',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>` ${c.label}: ${c.raw} customers`}}},animation:{duration:900,easing:'easeOutQuart'}}});
+
+new Chart(document.getElementById('rfmRevChart'),{type:'bar',data:{labels:['Champions','Loyal','Recent','At Risk','Dormant'],datasets:[{data:[189240,124850,38650,78920,24340],backgroundColor:['#b54708','#0066cc','#117a3d','#6b21a8','#d1d5db'],borderWidth:0,borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:ttMoney},scales:SC,animation:{duration:700,easing:'easeOutQuart'}}});
+
+// ── AGE GROUP CHARTS ─────────────────────────────────────────────
+const AGE_GRPS=['18–25','26–35','36–45','46–55','56–65'];
+const AGE_BEAUTY=[21405,26150,26840,38520,13890];
+const AGE_CLOTH=[17350,39950,21570,45340,33905];
+const AGE_ELEC=[32455,34490,38986,54115,34345];
+const AGE_TOT=[71210,100590,87396,137975,82140];
+const AGE_CNT=[121,235,198,284,177];
+const AGE_AVG=[589,428,441,486,464];
+const AGE_COLS=['#117a3d','#0066cc','#b54708','#6b21a8','#0891b2'];
+
+let ageChart,ageType='stacked';
+
+function buildAge(){
+  if(ageType==='line')return{type:'line',data:{labels:AGE_GRPS,datasets:[
+    {label:'Beauty',data:AGE_BEAUTY,borderColor:'#1a1f2e',backgroundColor:'rgba(26,31,46,0.08)',fill:false,tension:0.4,borderWidth:2.5,pointRadius:5},
+    {label:'Clothing',data:AGE_CLOTH,borderColor:'#b54708',backgroundColor:'rgba(181,71,8,0.08)',fill:false,tension:0.4,borderWidth:2.5,pointRadius:5},
+    {label:'Electronics',data:AGE_ELEC,borderColor:'#0066cc',backgroundColor:'rgba(0,102,204,0.08)',fill:false,tension:0.4,borderWidth:2.5,pointRadius:5}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{color:'#6b7280',font:{family:"'IBM Plex Mono',monospace",size:10},boxWidth:9,padding:10}},tooltip:ttMoney},scales:SC,animation:{duration:600,easing:'easeOutQuart'}}};
+  return{type:'bar',data:{labels:AGE_GRPS,datasets:[
+    {label:'Beauty',data:AGE_BEAUTY,backgroundColor:'rgba(26,31,46,.75)',borderWidth:0,borderRadius:ageType==='grouped'?4:0,borderSkipped:false},
+    {label:'Clothing',data:AGE_CLOTH,backgroundColor:'rgba(181,71,8,.75)',borderWidth:0,borderRadius:ageType==='grouped'?4:0,borderSkipped:false},
+    {label:'Electronics',data:AGE_ELEC,backgroundColor:'rgba(0,102,204,.75)',borderWidth:0,borderRadius:ageType==='grouped'?4:0,borderSkipped:false}
+  ]},options:{responsive:true,maintainAspectRatio:false,stacked:ageType==='stacked',plugins:{legend:{display:true,position:'bottom',labels:{color:'#6b7280',font:{family:"'IBM Plex Mono',monospace",size:10},boxWidth:9,padding:10}},tooltip:ttMoney},scales:SC,animation:{duration:600,easing:'easeOutQuart'}}};
+}
+function swAge(t,b){ageType=t;document.querySelectorAll('#panel-age .ca').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(ageChart)ageChart.destroy();ageChart=new Chart(document.getElementById('ageChart'),buildAge());}
+ageChart=new Chart(document.getElementById('ageChart'),buildAge());
+
+// Avg order bar
+new Chart(document.getElementById('ageAvgChart'),{type:'bar',data:{labels:AGE_GRPS,datasets:[{data:AGE_AVG,backgroundColor:AGE_COLS,borderWidth:0,borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>` Avg: $${c.raw}`}}},scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#9ca3af',font:{family:"'IBM Plex Mono',monospace",size:10}}},y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#9ca3af',font:{family:"'IBM Plex Mono',monospace",size:10},callback:v=>'$'+v}}},animation:{duration:700,easing:'easeOutQuart'}}});
+
+// Age pie
+new Chart(document.getElementById('agePieChart'),{type:'doughnut',data:{labels:AGE_GRPS,datasets:[{data:AGE_TOT,backgroundColor:['#117a3d','#0066cc','#b54708','#6b21a8','#0891b2'],borderColor:['#fff','#fff','#fff','#fff','#fff'],borderWidth:3,hoverOffset:7}]},options:{cutout:'60%',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>` ${c.label}: $${c.raw.toLocaleString()}`}}},animation:{duration:900,easing:'easeOutQuart'}}});
+
+// Trend line
+new Chart(document.getElementById('ageTrendChart'),{type:'line',data:{labels:AGE_GRPS,datasets:[
+  {label:'Beauty %',data:[30.1,26.0,30.7,27.9,16.9],borderColor:'#1a1f2e',borderWidth:2,tension:0.4,pointRadius:4,fill:false},
+  {label:'Clothing %',data:[24.4,39.7,24.7,32.9,41.3],borderColor:'#b54708',borderWidth:2,tension:0.4,pointRadius:4,fill:false},
+  {label:'Electronics %',data:[45.6,34.3,44.6,39.2,41.8],borderColor:'#0066cc',borderWidth:2,tension:0.4,pointRadius:4,fill:false}
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{color:'#6b7280',font:{family:"'IBM Plex Mono',monospace",size:10},boxWidth:9,padding:10}},tooltip:{...TT,callbacks:{label:c=>` ${c.dataset.label}: ${c.raw.toFixed(1)}%`}}},scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#9ca3af',font:{family:"'IBM Plex Mono',monospace",size:10}}},y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#9ca3af',font:{family:"'IBM Plex Mono',monospace",size:10},callback:v=>v+'%'}}},animation:{duration:700,easing:'easeOutQuart'}}});
+
+// ── HEATMAP ──────────────────────────────────────────────────────
+const hmData=[
+  {g:'18–25',b:21405,c:17350,e:32455,tot:71210,avg:589,cnt:121},
+  {g:'26–35',b:26150,c:39950,e:34490,tot:100590,avg:428,cnt:235},
+  {g:'36–45',b:26840,c:21570,e:38986,tot:87396,avg:441,cnt:198},
+  {g:'46–55',b:38520,c:45340,e:54115,tot:137975,avg:486,cnt:284},
+  {g:'56–65',b:13890,c:33905,e:34345,tot:82140,avg:464,cnt:177},
+];
+const maxV=Math.max(...hmData.map(d=>Math.max(d.b,d.c,d.e)));
+function hmColor(v){
+  const pct=v/maxV;
+  if(pct>0.8)return{bg:'rgba(0,102,204,0.85)',fg:'#fff'};
+  if(pct>0.6)return{bg:'rgba(0,102,204,0.55)',fg:'#fff'};
+  if(pct>0.4)return{bg:'rgba(0,102,204,0.3)',fg:'#1a1f2e'};
+  if(pct>0.2)return{bg:'rgba(0,102,204,0.15)',fg:'#4b5563'};
+  return{bg:'rgba(0,102,204,0.06)',fg:'#9ca3af'};
+}
+const tbody=document.getElementById('heatmapBody');
+hmData.forEach(d=>{
+  const bc=hmColor(d.b),cc=hmColor(d.c),ec=hmColor(d.e);
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td class="td-n">${d.g}</td>
+    <td><span class="hm-cell" style="background:${bc.bg};color:${bc.fg}">$${(d.b/1000).toFixed(1)}K</span></td>
+    <td><span class="hm-cell" style="background:${cc.bg};color:${cc.fg}">$${(d.c/1000).toFixed(1)}K</span></td>
+    <td><span class="hm-cell" style="background:${ec.bg};color:${ec.fg}">$${(d.e/1000).toFixed(1)}K</span></td>
+    <td class="td-mo" style="font-weight:700">$${(d.tot/1000).toFixed(1)}K</td>
+    <td class="td-mo">$${d.avg}</td>
+    <td class="td-mo">${d.cnt}</td>
+  `;
+  tbody.appendChild(tr);
+});
+
+// ── CHATBOT ──────────────────────────────────────────────────────
+function toggleChat(){
+  const f=document.getElementById('chatFloat');
+  const fab=document.getElementById('chatFab');
+  f.classList.toggle('hidden');
+  fab.textContent=f.classList.contains('hidden')?'💬':'✕';
+}
+
+const KB={
+  greet:['hello','hi','hey'],
+  month:['month','monthly','trend','may','september','peak','best month','worst','seasonal'],
+  cat:['category','categories','product','electronics','clothing','beauty','top','leads'],
+  gender:['gender','female','male','women','men','who spends','split'],
+  revenue:['revenue','total','overall','how much','sales'],
+  age:['age','young','old','18','25','26','35','36','45','46','55','56','65','group','demographic'],
+  rfm:['rfm','segment','champion','loyal','risk','dormant','recent','customer','retention'],
+  summary:['summary','overview','tell','explain','analyze','insight','full','everything']
+};
+const R={
+  greet:"Good day! I'm your <strong>InsightFlow AI analyst</strong>. I have full visibility into your 2023 retail dataset — 1,000 transactions across Beauty, Clothing, and Electronics. What would you like to explore?",
+  month:"<strong>May 2023 was your peak month</strong> at $53,150 — 46% above the monthly average of ~$36K. September was the low at $23,620. Two revenue clusters appear: <span class='g'>Feb–Apr</span> and <strong>Oct–Dec (strong Q4)</strong>.",
+  cat:"<strong>Electronics leads</strong> at $156,905 (34.4%), followed by Clothing at $155,580 and Beauty at $143,515. The spread is only <strong>~9%</strong> — a well-balanced, low-concentration portfolio.",
+  gender:"Female generated <strong>$229K (51%)</strong> vs Male <strong>$250K (49%)</strong>. Key finding: <span class='g'>Female avg transaction ($496) beats Male ($448)</span>. Males dominate Electronics ($106K), Females lead Clothing ($77K) and Beauty ($65K).",
+  revenue:"Total 2023 revenue: <strong>$456K</strong> across 1,000 transactions. Average transaction: <strong>$456</strong>. Distributed evenly — Electronics 34.4%, Clothing 34.1%, Beauty 31.5%.",
+  age:"<strong>46–55 is your highest-value group</strong> at $138K (30.2% of revenue) with 284 transactions. Surprisingly, <span class='o'>18–25 has the highest avg transaction at $589</span> — they buy less often but spend more per order. Electronics dominates 18–25 and 36–45, while Clothing peaks in 26–35 and 46–55.",
+  rfm:"<strong>Champions (31.2%) drive 41.5% of revenue ($189K)</strong> — protect this group. <span class='o'>At-Risk (24.4%) represents $79K in recoverable revenue</span> — a win-back campaign is recommended. Dormant customers (15.9%) generated only $24K and need a re-engagement offer.",
+  summary:"<strong>2023 Full Summary:</strong><br><br>① Revenue: $456K · avg $36K/month<br>② <strong>Peak: May ($53K)</strong> · Low: Sep ($23.6K)<br>③ Categories balanced within 9%<br>④ <span class='g'>Gender: 51F / 49M</span> — near-parity but category preferences differ<br>⑤ <strong>46–55 highest revenue group</strong>, 18–25 highest avg order<br>⑥ Champions (31%) drive 41% of revenue",
+  fallback:"I can analyze <strong>monthly trends</strong>, <strong>category performance</strong>, <strong>gender splits</strong>, <strong>age groups</strong>, or <strong>RFM segments</strong>. Try: <em>\"Which age group spends most?\"</em> or <em>\"Explain the RFM segments.\"</em>"
+};
+function detectIntent(m){
+  m=m.toLowerCase();
+  if(KB.greet.some(w=>m.includes(w)))return'greet';
+  if(KB.summary.some(w=>m.includes(w)))return'summary';
+  if(KB.rfm.some(w=>m.includes(w)))return'rfm';
+  if(KB.age.some(w=>m.includes(w)))return'age';
+  if(KB.gender.some(w=>m.includes(w)))return'gender';
+  if(KB.cat.some(w=>m.includes(w)))return'cat';
+  if(KB.month.some(w=>m.includes(w)))return'month';
+  if(KB.revenue.some(w=>m.includes(w)))return'revenue';
+  return'fallback';
+}
+function appendMsg(role,html){
+  const c=document.getElementById('msgs');
+  const d=document.createElement('div');
+  d.className='msg '+role;
+  d.innerHTML=`<div class="mav ${role}">${role==='ai'?'AI':'U'}</div><div class="mbub">${html}</div>`;
+  c.appendChild(d);c.scrollTop=c.scrollHeight;
+}
+function showTyping(){
+  const c=document.getElementById('msgs');
+  const d=document.createElement('div');d.className='msg ai';d.id='typ';
+  d.innerHTML=`<div class="mav ai">AI</div><div class="mbub"><div class="typing"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div></div>`;
+  c.appendChild(d);c.scrollTop=c.scrollHeight;
+}
+function sendMsg(){
+  const inp=document.getElementById('cinput');
+  const v=inp.value.trim();if(!v)return;
+  inp.value='';appendMsg('user',v);showTyping();
+  setTimeout(()=>{document.getElementById('typ')?.remove();appendMsg('ai',R[detectIntent(v)]);},800+Math.random()*500);
+}
+function askQ(q){
+  const f=document.getElementById('chatFloat');
+  if(f.classList.contains('hidden'))toggleChat();
+  document.getElementById('cinput').value=q;sendMsg();
+}
+const tabLabels={gender:'Gender × Category',rfm:'Customer RFM',age:'Age Group Analysis'};
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  document.getElementById('panel-'+id).classList.add('active');
+  document.getElementById('bc-cur').textContent=tabLabels[id];
+}
+function setSideActive(el){
+  document.querySelectorAll('.nav-i').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InsightFlow — Decision Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #141a14;
+  --surface: #1a211a;
+  --surface2: #1f281f;
+  --line: #273027;
+  --line2: #2e392e;
+  --accent: #22c55e;
+  --accent-dim: rgba(34,197,94,0.1);
+  --text: #dce8dc;
+  --text2: #7d9a7d;
+  --muted: #4a5f4a;
+  --sans: 'DM Sans', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);overflow-x:hidden;}
+
+/* NAV */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(20,26,20,0.93);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+  padding:0 5vw;height:52px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.nav-logo{display:flex;align-items:center;gap:9px;text-decoration:none;}
+.logo-mark{
+  width:26px;height:26px;background:var(--accent);border-radius:5px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:10px;font-weight:500;color:#0f140f;
+}
+.logo-text{font-size:14px;font-weight:600;color:var(--text);}
+.nav-links{display:flex;align-items:center;gap:24px;}
+.nav-links a{font-size:13px;color:var(--text2);text-decoration:none;transition:color .2s;}
+.nav-links a:hover{color:var(--text);}
+.nav-cta{
+  font-size:12.5px;font-weight:600;color:#0f140f;background:var(--accent);
+  padding:7px 15px;border-radius:5px;text-decoration:none;transition:opacity .2s;
+}
+.nav-cta:hover{opacity:.85;}
+
+/* HERO */
+.hero{
+  max-width:960px;margin:0 auto;
+  padding:120px 5vw 72px;
+}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:7px;
+  font-family:var(--mono);font-size:11px;color:var(--muted);
+  letter-spacing:.09em;text-transform:uppercase;margin-bottom:22px;
+}
+.edot{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(34,197,94,.4)}50%{opacity:.6;box-shadow:0 0 0 5px rgba(34,197,94,0)}}
+.hero h1{
+  font-size:clamp(30px,4.4vw,54px);font-weight:600;
+  line-height:1.15;letter-spacing:-.02em;
+  max-width:660px;margin-bottom:16px;color:var(--text);
+}
+.hero h1 span{color:var(--accent);}
+.hero-sub{
+  font-size:14.5px;color:var(--text2);line-height:1.7;
+  max-width:440px;margin-bottom:32px;font-weight:300;
+}
+.hero-actions{display:flex;align-items:center;gap:10px;margin-bottom:48px;}
+.btn-primary{
+  font-size:13px;font-weight:600;color:#0f140f;background:var(--accent);
+  padding:11px 22px;border-radius:6px;text-decoration:none;transition:opacity .2s;
+}
+.btn-primary:hover{opacity:.85;}
+.btn-secondary{
+  font-size:13px;font-weight:400;color:var(--text2);
+  padding:11px 18px;border-radius:6px;text-decoration:none;
+  border:1px solid var(--line2);transition:all .2s;
+}
+.btn-secondary:hover{border-color:var(--text2);color:var(--text);}
+.hero-stats{
+  display:flex;gap:36px;border-top:1px solid var(--line);padding-top:28px;
+}
+.stat-item{display:flex;flex-direction:column;gap:3px;}
+.stat-val{font-family:var(--mono);font-size:18px;font-weight:500;color:var(--accent);}
+.stat-label{font-size:11px;color:var(--muted);}
+
+/* MARQUEE */
+.marquee-wrap{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:11px 0;background:var(--surface);overflow:hidden;}
+.marquee-track{display:flex;white-space:nowrap;animation:scroll 22s linear infinite;}
+@keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.marquee-item{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:0 22px;font-size:11px;font-weight:500;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--muted);border-right:1px solid var(--line2);
+}
+.marquee-item .dot{color:var(--accent);}
+
+/* SECTIONS */
+section{padding:60px 5vw;}
+.container{max-width:960px;margin:0 auto;}
+.section-label{font-family:var(--mono);font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;}
+.section-title{font-size:clamp(22px,2.8vw,34px);font-weight:600;line-height:1.2;color:var(--text);margin-bottom:12px;letter-spacing:-.01em;}
+.section-sub{font-size:13.5px;color:var(--text2);max-width:440px;line-height:1.7;font-weight:300;}
+
+/* PROBLEM/SOLUTION */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:36px;border-radius:8px;overflow:hidden;border:1px solid var(--line);}
+.problem-card{background:var(--surface);padding:24px;}
+.solution-card{background:var(--surface2);padding:24px;border-left:1px solid var(--line);}
+.card-tag{
+  font-family:var(--mono);font-size:10px;font-weight:500;text-transform:uppercase;
+  letter-spacing:.08em;padding:3px 8px;border-radius:3px;display:inline-block;margin-bottom:14px;
+}
+.tag-p{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2);}
+.tag-s{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(34,197,94,.2);}
+.card-h{font-size:13px;font-weight:500;margin-bottom:14px;color:var(--text2);}
+.card-item{
+  display:flex;align-items:flex-start;gap:9px;padding:8px 0;
+  border-top:1px solid var(--line);font-size:12.5px;color:var(--text2);line-height:1.5;
+}
+
+/* HOW IT WORKS */
+.how-section{background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+.flow-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-top:36px;
+}
+.flow-step{background:var(--bg);padding:22px 18px;transition:background .2s;}
+.flow-step:hover{background:var(--surface2);}
+.step-num{font-family:var(--mono);font-size:10px;color:var(--accent);margin-bottom:14px;opacity:.6;}
+.step-icon{font-size:18px;margin-bottom:10px;}
+.step-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.step-desc{font-size:11.5px;color:var(--muted);line-height:1.6;}
+
+/* DEMO */
+.demo-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:36px;}
+.demo-card{border-radius:7px;overflow:hidden;border:1px solid var(--line);}
+.demo-bar{
+  padding:8px 13px;font-family:var(--mono);font-size:10px;font-weight:500;
+  text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--line);
+}
+.before-bar{background:rgba(239,68,68,.07);color:#f87171;}
+.after-bar{background:var(--accent-dim);color:var(--accent);}
+.demo-content{background:var(--surface);padding:16px;}
+.demo-raw{font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.9;}
+.demo-raw .hl{color:var(--text);}
+.demo-insight{font-size:13px;color:var(--text);line-height:1.75;}
+.demo-insight strong{color:var(--accent);}
+
+/* DASHBOARD LINK */
+.preview-strip{border:1px solid var(--line);border-radius:7px;overflow:hidden;margin-top:22px;}
+.preview-bar{padding:8px 13px;background:var(--surface2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:6px;}
+.dot-r{width:8px;height:8px;border-radius:50%;background:#f87171;}
+.dot-y{width:8px;height:8px;border-radius:50%;background:#fbbf24;}
+.dot-g{width:8px;height:8px;border-radius:50%;background:#4ade80;}
+.preview-url{font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:5px;}
+.preview-link{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;background:var(--surface);text-decoration:none;transition:background .2s;
+}
+.preview-link:hover{background:var(--surface2);}
+.preview-link strong{font-size:13px;color:var(--text);font-weight:600;}
+.preview-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.preview-arrow{color:var(--accent);font-size:15px;}
+
+/* SUBMIT */
+.submit-section{background:var(--surface);border-top:1px solid var(--line);}
+.submit-wrap{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:36px;}
+.submit-form{display:flex;flex-direction:column;gap:12px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+label{font-size:11px;font-weight:500;color:var(--text2);}
+input,textarea{
+  font-family:var(--sans);font-size:13px;color:var(--text);
+  background:var(--bg);border:1px solid var(--line2);
+  border-radius:6px;padding:9px 12px;outline:none;transition:border-color .2s;
+}
+input::placeholder,textarea::placeholder{color:var(--muted);}
+input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(34,197,94,.07);}
+textarea{resize:vertical;min-height:72px;}
+
+.drop-zone{
+  border:1.5px dashed var(--line2);border-radius:7px;padding:22px 16px;
+  text-align:center;cursor:pointer;transition:all .2s;background:var(--bg);position:relative;
+}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--accent);background:rgba(34,197,94,.04);}
+.drop-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.drop-icon{font-size:20px;margin-bottom:6px;}
+.drop-main{font-size:12.5px;color:var(--text2);margin-bottom:3px;}
+.drop-main span{color:var(--accent);font-weight:500;}
+.drop-sub{font-size:11px;color:var(--muted);}
+.file-info{font-family:var(--mono);font-size:11px;color:var(--accent);margin-top:8px;display:none;}
+
+.form-note{font-size:11px;color:var(--muted);line-height:1.6;}
+.btn-submit{
+  font-size:13px;font-weight:600;color:#0f140f;background:var(--accent);
+  padding:11px 22px;border-radius:6px;border:none;cursor:pointer;
+  transition:opacity .2s;width:100%;margin-top:2px;
+}
+.btn-submit:hover{opacity:.85;}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed;}
+
+.submit-info{display:flex;flex-direction:column;}
+.info-item{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:14px 0;border-bottom:1px solid var(--line);
+}
+.info-item:first-child{border-top:1px solid var(--line);}
+.info-icon{font-size:15px;flex-shrink:0;margin-top:1px;}
+.info-title{font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:3px;}
+.info-desc{font-size:11.5px;color:var(--muted);line-height:1.6;}
+
+/* FOOTER */
+footer{
+  border-top:1px solid var(--line);padding:20px 5vw;
+  display:flex;align-items:center;justify-content:space-between;background:var(--bg);
+}
+.footer-left{display:flex;align-items:center;gap:20px;}
+.footer-copy{font-size:12px;color:var(--muted);}
+.footer-links{display:flex;gap:14px;}
+.footer-links a{font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s;}
+.footer-links a:hover{color:var(--text);}
+.footer-right{font-family:var(--mono);font-size:10.5px;color:var(--muted);}
+
+.fade-up{opacity:0;transform:translateY(14px);animation:fu .5s ease forwards;}
+@keyframes fu{to{opacity:1;transform:none;}}
+.d1{animation-delay:.07s}.d2{animation-delay:.15s}.d3{animation-delay:.23s}.d4{animation-delay:.31s}
+
+@media(max-width:768px){
+  .two-col,.flow-grid,.demo-wrap,.submit-wrap{grid-template-columns:1fr;}
+  .hero-stats{flex-wrap:wrap;gap:20px;}
+  .form-row{grid-template-columns:1fr;}
+  .nav-links{display:none;}
+  .solution-card{border-left:none;border-top:1px solid var(--line);}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="logo-mark">IF</div>
+    <span class="logo-text">InsightFlow</span>
+  </a>
+  <div class="nav-links">
+    <a href="#how">How It Works</a>
+    <a href="#demo">See Output</a>
+    <a href="#submit">Get Analysis</a>
+  </div>
+  <a href="#submit" class="nav-cta">Submit Data →</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow fade-up"><div class="edot"></div> Decision Intelligence · v2.2</div>
+  <h1 class="fade-up d1">Your data tells a story.<br><span>InsightFlow explains it.</span></h1>
+  <p class="hero-sub fade-up d2">AI-powered analytics that goes beyond dashboards — turning raw sales data into plain-English decisions, with a RAG chatbot trained on your numbers.</p>
+  <div class="hero-actions fade-up d3">
+    <a href="#submit" class="btn-primary">Submit Your Data →</a>
+    <a href="dashboard.html" class="btn-secondary">View Demo</a>
+  </div>
+  <div class="hero-stats fade-up d4">
+    <div class="stat-item"><span class="stat-val">1K+</span><span class="stat-label">Transactions analyzed</span></div>
+    <div class="stat-item"><span class="stat-val">RAG</span><span class="stat-label">AI chatbot on your data</span></div>
+    <div class="stat-item"><span class="stat-val">3</span><span class="stat-label">Analysis dimensions</span></div>
+    <div class="stat-item"><span class="stat-val">2–3d</span><span class="stat-label">Turnaround</span></div>
+  </div>
+</div>
+
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <div class="marquee-item">Revenue Analysis <span class="dot">·</span></div>
+    <div class="marquee-item">RFM Scoring <span class="dot">·</span></div>
+    <div class="marquee-item">Customer Segmentation <span class="dot">·</span></div>
+    <div class="marquee-item">AI Insight Generation <span class="dot">·</span></div>
+    <div class="marquee-item">Gender Analysis <span class="dot">·</span></div>
+    <div class="marquee-item">Age Group Trends <span class="dot">·</span></div>
+    <div class="marquee-item">RAG Chatbot <span class="dot">·</span></div>
+    <div class="marquee-item">Power BI Integration <span class="dot">·</span></div>
+    <div class="marquee-item">Revenue Analysis <span class="dot">·</span></div>
+    <div class="marquee-item">RFM Scoring <span class="dot">·</span></div>
+    <div class="marquee-item">Customer Segmentation <span class="dot">·</span></div>
+    <div class="marquee-item">AI Insight Generation <span class="dot">·</span></div>
+    <div class="marquee-item">Gender Analysis <span class="dot">·</span></div>
+    <div class="marquee-item">Age Group Trends <span class="dot">·</span></div>
+    <div class="marquee-item">RAG Chatbot <span class="dot">·</span></div>
+    <div class="marquee-item">Power BI Integration <span class="dot">·</span></div>
+  </div>
+</div>
+
+<!-- PROBLEM / SOLUTION -->
+<section>
+  <div class="container">
+    <div class="section-label">The Gap We Close</div>
+    <div class="section-title">Beyond "what happened"</div>
+    <p class="section-sub">Traditional BI stops at charts. InsightFlow adds an AI layer — every metric gets context and a recommended action.</p>
+    <div class="two-col">
+      <div class="problem-card">
+        <span class="card-tag tag-p">Standard Dashboard</span>
+        <div class="card-h">"What is happening?"</div>
+        <div class="card-item">📊 Electronics generated the most revenue</div>
+        <div class="card-item">👥 Female customers: 460 transactions</div>
+        <div class="card-item">🔢 Average order value: $456</div>
+        <div class="card-item">⚠️ 244 customers flagged at-risk</div>
+      </div>
+      <div class="solution-card">
+        <span class="card-tag tag-s">InsightFlow</span>
+        <div class="card-h">"Why — and what do we do?"</div>
+        <div class="card-item">🤖 Electronics leads — prioritize inventory and acquisition here.</div>
+        <div class="card-item">🎯 Female buyers avg 11% more per order — your premium segment.</div>
+        <div class="card-item">⚠️ At-risk = $79K recoverable — launch a win-back campaign now.</div>
+        <div class="card-item">💬 Ask your data anything via RAG chatbot — grounded in your numbers.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section" id="how">
+  <div class="container">
+    <div class="section-label">Architecture</div>
+    <div class="section-title">How it works</div>
+    <p class="section-sub">Four layers — from raw CSV to interactive dashboards with AI explanations on top.</p>
+    <div class="flow-grid">
+      <div class="flow-step">
+        <div class="step-num">01</div>
+        <div class="step-icon">📂</div>
+        <div class="step-title">Data Ingestion</div>
+        <div class="step-desc">Submit a retail sales CSV. Pandas cleans and structures it for analysis.</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">02</div>
+        <div class="step-icon">⚙️</div>
+        <div class="step-title">Analytics Engine</div>
+        <div class="step-desc">FastAPI computes KPIs — revenue, RFM scores, cohort metrics — via /insights endpoint.</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">03</div>
+        <div class="step-icon">🤖</div>
+        <div class="step-title">AI + RAG Layer</div>
+        <div class="step-desc">LLM converts KPIs into decisions. RAG chatbot answers questions grounded in your data.</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">04</div>
+        <div class="step-icon">📊</div>
+        <div class="step-title">Dashboard</div>
+        <div class="step-desc">Interactive Power BI charts — each with an AI narrative explaining what you're seeing.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AI OUTPUT DEMO -->
+<section id="demo">
+  <div class="container">
+    <div class="section-label">AI Output</div>
+    <div class="section-title">Metrics become decisions</div>
+    <p class="section-sub">How InsightFlow transforms raw numbers into actionable intelligence.</p>
+    <div class="demo-wrap">
+      <div class="demo-card">
+        <div class="demo-bar before-bar">✕ Standard Output</div>
+        <div class="demo-content">
+          <div class="demo-raw">
+            <span class="hl">Electronics:</span> $156,905 · 34.4%<br>
+            <span class="hl">Clothing:</span> $155,580 · 34.1%<br>
+            <span class="hl">Beauty:</span> $143,515 · 31.5%<br><br>
+            <span class="hl">Female avg txn:</span> $496<br>
+            <span class="hl">Male avg txn:</span> $448<br><br>
+            <span class="hl">At-Risk customers:</span> 244<br>
+            <span class="hl">At-Risk revenue:</span> $78,920
+          </div>
+        </div>
+      </div>
+      <div class="demo-card">
+        <div class="demo-bar after-bar">✓ InsightFlow AI</div>
+        <div class="demo-content">
+          <div class="demo-insight">
+            <strong>Electronics leads but the margin over Clothing is thin</strong> — a balanced portfolio, not a concentration risk. <strong>Female buyers are your premium segment</strong> at $496 avg. Most urgently, <strong>At-Risk customers hold $79K in recoverable revenue</strong> — a 30-day win-back campaign should be your immediate priority.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="preview-strip">
+      <div class="preview-bar">
+        <div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div>
+        <span class="preview-url">insightflow / demo / dashboard.html</span>
+      </div>
+      <a href="dashboard.html" class="preview-link">
+        <div>
+          <strong>View the full interactive dashboard →</strong>
+          <div class="preview-meta">Gender × Category · RFM · Age Group · AI Chatbot</div>
+        </div>
+        <span class="preview-arrow">↗</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- SUBMIT -->
+<section class="submit-section" id="submit">
+  <div class="container">
+    <div class="section-label">Get Your Analysis</div>
+    <div class="section-title">Submit your data</div>
+    <p class="section-sub">Upload a sales CSV and receive a full InsightFlow report — dashboards, AI insights, and RAG chatbot access on your numbers.</p>
+    <div class="submit-wrap">
+      <form class="submit-form" onsubmit="handleSubmit(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" placeholder="Your name" required>
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" placeholder="you@company.com" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Organization <span style="color:var(--muted);font-weight:300">(optional)</span></label>
+          <input type="text" placeholder="Company or project">
+        </div>
+        <div class="form-group">
+          <label>Upload Dataset</label>
+          <div class="drop-zone" id="dropZone">
+            <input type="file" accept=".csv,.xlsx,.xls" id="fileInput" onchange="handleFile(this)">
+            <div class="drop-icon">📁</div>
+            <div class="drop-main"><span>Click to upload</span> or drag & drop</div>
+            <div class="drop-sub">CSV or XLSX · max 20 MB</div>
+            <div class="file-info" id="fileInfo"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Analysis Goals <span style="color:var(--muted);font-weight:300">(optional)</span></label>
+          <textarea placeholder="What decisions do you want InsightFlow to help with?"></textarea>
+        </div>
+        <div class="form-note">Processed securely, never shared. We confirm receipt in 24h and deliver your analysis in 2–3 business days.</div>
+        <button type="submit" class="btn-submit" id="submitBtn">Request Analysis →</button>
+      </form>
+
+      <div class="submit-info">
+        <div class="info-item">
+          <div class="info-icon">📂</div>
+          <div>
+            <div class="info-title">What to submit</div>
+            <div class="info-desc">A CSV with transaction records — date, customer ID, category, amount. Demographic fields (age, gender) unlock deeper segmentation.</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-icon">📊</div>
+          <div>
+            <div class="info-title">What you receive</div>
+            <div class="info-desc">Interactive dashboard, AI insight report, RFM segmentation, and 30-day RAG chatbot access trained on your data.</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-icon">💬</div>
+          <div>
+            <div class="info-title">RAG chatbot included</div>
+            <div class="info-desc">Ask anything — "Which age group spends most?" — and get answers grounded in your actual numbers, not generic AI guesses.</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-icon">⏱</div>
+          <div>
+            <div class="info-title">2–3 day turnaround</div>
+            <div class="info-desc">Receipt confirmed within 24h. Priority processing available on request.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-left">
+    <span class="footer-copy">© 2024 InsightFlow</span>
+    <div class="footer-links">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="#how">How It Works</a>
+      <a href="#submit">Get Analysis</a>
+    </div>
+  </div>
+  <div class="footer-right">v2.2 · AI-powered analytics</div>
+</footer>
+
+<script>
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('dragover');
+  const f = e.dataTransfer.files[0]; if (f) showFile(f);
+});
+function handleFile(input) { if (input.files[0]) showFile(input.files[0]); }
+function showFile(f) {
+  const size = f.size > 1048576 ? (f.size/1048576).toFixed(1)+' MB' : (f.size/1024).toFixed(0)+' KB';
+  const info = document.getElementById('fileInfo');
+  info.textContent = '✓ ' + f.name + ' · ' + size;
+  info.style.display = 'block';
+  dz.style.borderColor = 'var(--accent)';
+  dz.style.background = 'rgba(34,197,94,.04)';
+}
+function handleSubmit(e) {
+  e.preventDefault();
+  const file = document.getElementById('fileInput').files[0];
+  if (!file) {
+    dz.style.borderColor = '#f87171';
+    dz.querySelector('.drop-sub').textContent = '⚠ Please attach a file';
+    dz.querySelector('.drop-sub').style.color = '#f87171';
+    return;
+  }
+  const btn = document.getElementById('submitBtn');
+  btn.textContent = 'Submitting…'; btn.disabled = true;
+  setTimeout(() => {
+    btn.textContent = '✓ Received — we\'ll be in touch within 24h';
+    btn.style.background = '#16a34a';
+  }, 1400);
+}
+
+// Scroll fade
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.style.opacity='1'; e.target.style.transform='none'; }});
+}, { threshold: 0.08 });
+document.querySelectorAll('.flow-step, .demo-card, .problem-card, .solution-card').forEach(el => {
+  el.style.opacity='0'; el.style.transform='translateY(12px)';
+  el.style.transition='opacity .45s ease, transform .45s ease';
+  obs.observe(el);
+});
+</script>
+</body>
+</html>
