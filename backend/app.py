@@ -2,25 +2,20 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import pandas as pd
 import os
-import requests
 from dotenv import load_dotenv
+import os
 
-# -----------------------------
-# Load environment variables
-# -----------------------------
-load_dotenv()
-HF_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
-
-if not HF_API_KEY:
-    raise RuntimeError("HUGGINGFACE_API_KEY not found in environment variables")
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
+import requests
 
 # -----------------------------
 # FastAPI app
 # -----------------------------
 app = FastAPI(title="InsightFlow API")
 
+
 # -----------------------------
-# Utility: Load datasets (reload-safe)
+# Utility: Load datasets
 # -----------------------------
 def load_data():
     return {
@@ -29,11 +24,13 @@ def load_data():
         "customer_segments": pd.read_csv("../data/customer_segments.csv"),
     }
 
+
 # -----------------------------
 # Request schema
 # -----------------------------
 class QueryRequest(BaseModel):
     question: str
+
 
 # -----------------------------
 # Health check
@@ -41,6 +38,7 @@ class QueryRequest(BaseModel):
 @app.get("/")
 def root():
     return {"message": "InsightFlow API is running"}
+
 
 # -----------------------------
 # Core analytics endpoints
@@ -50,17 +48,21 @@ def get_revenue_by_category():
     data = load_data()["revenue_by_category"]
     return data.to_dict(orient="records")
 
+
 @app.get("/revenue/monthly")
 def get_monthly_revenue():
     data = load_data()["monthly_revenue"]
     return data.to_dict(orient="records")
 
+
 @app.get("/customers/segments")
 def get_customer_segments():
     data = load_data()["customer_segments"]
     return data.to_dict(orient="records")
+
+
 # -----------------------------
-# Structured Insights Endpoint (for Power BI)
+# Structured Insights Endpoint
 # -----------------------------
 @app.get("/insights")
 def get_insights():
@@ -80,18 +82,17 @@ def get_insights():
     elif change_pct < -5:
         trend = "declining"
 
-    top_cat = category_df.sort_values(
-        "Total Amount", ascending=False
-    ).iloc[0]
+    top_cat = category_df.sort_values("Total Amount", ascending=False).iloc[0]
 
     return {
         "revenue_trend": trend,
         "revenue_change_percent": change_pct,
-        "top_category": top_cat["Product Category"]
+        "top_category": top_cat["Product Category"],
     }
 
+
 # -----------------------------
-# LLM-powered query endpoint
+# LLM-powered query endpoint (Gemini)
 # -----------------------------
 @app.post("/query")
 def query_insights(req: QueryRequest):
@@ -104,13 +105,14 @@ def query_insights(req: QueryRequest):
     visualization = None
 
     # -----------------------------
-    # Intent detection (rule-based v1)
+    # Intent detection
     # -----------------------------
     if "category" in question:
         intent = "revenue_by_category"
         df = data["revenue_by_category"]
 
         from insight_engine import analyze_revenue_by_category
+
         result = analyze_revenue_by_category(df)
         context = result["context"]
         fallback_insight = result["fallback"]
@@ -122,15 +124,14 @@ def query_insights(req: QueryRequest):
 
         latest = df.iloc[-1]
 
+        recent = df.tail(5)
+
         context = f"""
 Month: {latest['Month']}
 Revenue: {latest['Total Amount']}
 """
 
-        fallback_insight = (
-            "Revenue shows a stable month-over-month trend, "
-            "suggesting consistent business performance."
-        )
+        fallback_insight = "Revenue shows a stable trend, indicating consistent performance but limited growth."
 
         visualization = "line_chart"
 
@@ -140,75 +141,73 @@ Revenue: {latest['Total Amount']}
 
         context = df.head(5).to_string(index=False)
 
-        fallback_insight = (
-            "Customer segmentation highlights differences in spending behavior, "
-            "which can be leveraged for targeted marketing."
-        )
+        fallback_insight = "Customer segmentation reveals varying spending patterns, enabling targeted marketing strategies."
 
         visualization = "stacked_bar"
 
     else:
         return {
             "error": "Query not understood",
-            "hint": "Try asking about revenue, monthly trends, or customer segments"
+            "hint": "Try asking about revenue, monthly trends, or customer segments",
         }
 
     # -----------------------------
-    # Hugging Face LLM call
+    # OpenRouter LLM call
     # -----------------------------
     insight_text = fallback_insight
     source = "fallback"
 
     try:
         headers = {
-            "Authorization": f"Bearer {HF_API_KEY}",
+            "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
             "Content-Type": "application/json",
         }
 
         payload = {
-            "inputs": f"""
-You are a senior business analyst.
+            "model": "google/gemma-3-27b-it:free",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": f"""You are a business analyst.
+Rules:
+- Use ONLY the given data
+- Do NOT invent new metrics
+- Do NOT ask for more data, provide helpful insights based on what you have
 
-Given the data below, write ONE concise executive-level insight.
-Do NOT repeat the numbers.
-Focus on implications and decisions.
 
-DATA:
+Data:
 {context}
 
-INSIGHT:
-""",
-            "options": {"use_cache": False},
+Insight:""",
+                }
+            ],
+            "temperature": 0.7,
+            "max_tokens": 100,
         }
 
-        HF_MODEL = "google/flan-t5-large"
-
         response = requests.post(
-            "https://router.huggingface.co/models/google/flan-t5-large",
-            headers= {  "Authorization ": f"Bearer {HF_API_KEY}",  "Content-Type": "application/json"
-                       },
-            json={"inputs" : context},
-            timeout=60,
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=30,
         )
-        print("HF STATUS:", response.status_code)
-        print("HF RESPONSE:", response.text)
+
+        print("OPENROUTER STATUS:", response.status_code)
+        print("OPENROUTER RESPONSE:", response.text)
 
         if response.status_code == 200:
-            data = response.json()
+            result = response.json()
+            generated = result["choices"][0]["message"]["content"].strip()
 
-            # Handle HF response formats safely
-            if isinstance(data, list) and "generated_text" in data[0]:
-                insight_text = data[0]["generated_text"].strip()
-                source = "huggingface"
-            elif isinstance(data, dict) and "generated_text" in data:
-                insight_text = data["generated_text"].strip()
-                source = "huggingface"
+            if generated:
+                insight_text = generated
+                source = "openrouter"
 
-    except Exception:
-        pass  # fallback already set
+    except Exception as e:
+        print("OPENROUTER ERROR:", e)
 
     # -----------------------------
-    # Final structured response
+    # Final response
     # -----------------------------
     return {
         "question": req.question,
@@ -217,3 +216,6 @@ INSIGHT:
         "recommended_visualization": visualization,
         "source": source,
     }
+
+
+print("API KEY:", os.getenv("OPENROUTER_API_KEY"))
