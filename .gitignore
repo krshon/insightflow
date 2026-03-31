@@ -10,7 +10,8 @@ venv/
 .env/
 
 howtorun.txt
- .vscode/
 
 rag_sales_bot.py
+
+.vscode/settings.json
 
