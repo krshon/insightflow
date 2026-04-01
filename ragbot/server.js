@@ -1,3 +1,5 @@
+import express from "express";
+import cors from "cors";
 import fs from "fs";
 import csv from "csv-parser";
 import dotenv from "dotenv";
@@ -5,14 +7,16 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 dotenv.config();
 
-// Initialize Gemini
+const app = express();
+app.use(cors());
+app.use(express.json());
+
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const model = genAI.getGenerativeModel({
   model: "gemini-2.5-flash"
 });
 
-// Load CSV
 function readCSV(filePath) {
   return new Promise((resolve) => {
     const rows = [];
@@ -24,7 +28,6 @@ function readCSV(filePath) {
   });
 }
 
-// Aggregate dataset intelligently
 function analyzeDataset(rows) {
 
   const regionSales = {};
@@ -53,12 +56,12 @@ function analyzeDataset(rows) {
   };
 }
 
-// Ask Gemini
-async function askQuestion(question) {
+const rows = await readCSV("sales.csv");
+const analytics = analyzeDataset(rows);
 
-  const rows = await readCSV("sales.csv");
+app.post("/ask", async (req, res) => {
 
-  const analytics = analyzeDataset(rows);
+  const question = req.body.question;
 
   const prompt = `
 You are a professional business data analyst.
@@ -80,77 +83,17 @@ ${JSON.stringify(analytics.segmentSales)}
 QUESTION:
 ${question}
 
-Answer clearly and include insights.
+Answer clearly with insights.
 `;
 
   const result = await model.generateContent(prompt);
 
-  console.log("\nAnswer:\n");
-  console.log(result.response.text());
-}
+  res.json({
+    answer: result.response.text()
+  });
 
-// Example question
-askQuestion("Which region has highest sales?");
-
-import readline from "readline";
-
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
 });
 
-async function startChat() {
-
-  const rows = await readCSV("sales.csv");
-  const analytics = analyzeDataset(rows);
-
-  console.log("\n📊 InsightFlow CSV Chatbot Ready!");
-  console.log("Type your question (or type 'exit' to quit)\n");
-
-  function ask() {
-    rl.question("Ask: ", async (question) => {
-
-      if (question.toLowerCase() === "exit") {
-        rl.close();
-        return;
-      }
-
-      const prompt = `
-You are a business data analyst.
-
-Answer the question using ONLY the dataset summary.
-
-Return a SHORT answer (max 2 sentences).
-
-DATASET ANALYTICS SUMMARY:
-
-Total Records:
-${analytics.totalRows}
-
-Region-wise Sales:
-${JSON.stringify(analytics.regionSales)}
-
-Category-wise Profit:
-${JSON.stringify(analytics.categoryProfit)}
-
-Segment-wise Sales:
-${JSON.stringify(analytics.segmentSales)}
-
-QUESTION:
-${question}
-`;
-
-      const result = await model.generateContent(prompt);
-
-      console.log("\nAnswer:\n");
-      console.log(result.response.text());
-      console.log("\n");
-
-      ask(); // keep chatting
-    });
-  }
-
-  ask();
-}
-
-startChat();
+app.listen(3000, () =>
+  console.log("Server running at http://localhost:3000")
+);
