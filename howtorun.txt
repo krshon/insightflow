@@ -1,1 +1,3 @@
 C:\Users\krish\OneDrive\Documents\cricinsight\backend>uvicorn app:app --reload
+
+C:\Users\krish\OneDrive\Documents\cricinsight\ragbot>node server.js
