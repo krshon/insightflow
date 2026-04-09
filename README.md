@@ -31,3 +31,5 @@ uvicorn app:app --reload
 - /customers/segments
 - /insights
 - /query
+
+Development in progress - updating chatbot
